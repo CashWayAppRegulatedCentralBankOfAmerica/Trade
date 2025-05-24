@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MT5 Web Dashboard - XM Global Replica</title>
+  <title>Deriv Replica Platform</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -13,104 +13,72 @@
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900">
-  <div class="max-w-screen-lg mx-auto p-4">
-    <header class="flex justify-between items-center py-4">
-      <h1 class="text-2xl font-semibold">MT5 Dashboard</h1>
-      <span class="text-sm text-gray-500">Demo Mode</span>
-    </header>
-
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-      <div class="bg-white rounded-2xl shadow p-4">
-        <p class="text-gray-500 text-sm">Balance</p>
-        <p class="text-2xl font-bold">$<span id="balance">10000.00</span></p>
-      </div>
-      <div class="bg-white rounded-2xl shadow p-4 flex flex-col gap-2">
-        <p class="text-gray-500 text-sm">Deposits</p>
-        <button class="bg-green-500 text-white py-1 px-3 rounded-lg text-sm hover:bg-green-600">Deposit</button>
-      </div>
-      <div class="bg-white rounded-2xl shadow p-4 flex flex-col gap-2">
-        <p class="text-gray-500 text-sm">Withdrawals</p>
-        <button class="bg-red-500 text-white py-1 px-3 rounded-lg text-sm hover:bg-red-600">Withdraw</button>
-      </div>
+  <!-- Navbar -->
+  <header class="bg-white shadow-md p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold">Deriv Replica</h1>
+    <div>
+      Balance: $<span id="balance">10000.00</span>
+      <button id="deposit" class="ml-2 px-3 py-1 bg-green-500 text-white rounded">Deposit</button>
+      <button id="withdraw" class="ml-2 px-3 py-1 bg-red-500 text-white rounded">Withdraw</button>
     </div>
+  </header>
 
-    <div class="bg-white rounded-2xl shadow p-4 mb-6">
-      <h2 class="text-lg font-semibold mb-2">Running Trades</h2>
-      <div id="running-trades" class="space-y-2">
-        <p class="text-sm text-gray-400 italic">No active trades found</p>
+  <div class="flex flex-col md:flex-row">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-1/4 bg-white shadow-md p-4">
+      <h2 class="text-lg font-semibold mb-4">Markets</h2>
+      <ul id="marketList" class="space-y-2">
+        <li><button onclick="selectMarket('EUR/USD')" class="w-full text-left p-2 rounded hover:bg-gray-200">EUR/USD</button></li>
+        <li><button onclick="selectMarket('USD/JPY')" class="w-full text-left p-2 rounded hover:bg-gray-200">USD/JPY</button></li>
+        <li><button onclick="selectMarket('GBP/USD')" class="w-full text-left p-2 rounded hover:bg-gray-200">GBP/USD</button></li>
+        <li><button onclick="selectMarket('V75')" class="w-full text-left p-2 rounded hover:bg-gray-200">Volatility 75</button></li>
+      </ul>
+    </aside>
+
+    <!-- Main Panel -->
+    <main class="flex-1 p-4">
+      <!-- Chart -->
+      <div class="bg-white rounded-xl p-4 shadow mb-4">
+        <h2 class="text-lg font-semibold mb-2" id="marketTitle">EUR/USD</h2>
+        <canvas id="marketChart" height="100"></canvas>
       </div>
-    </div>
 
-    <div class="bg-white rounded-2xl shadow p-4 mb-6">
-      <h2 class="text-lg font-semibold mb-4">Major Markets</h2>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="market-buttons">
-        <button class="p-4 bg-gray-50 rounded-xl shadow-sm text-left" onclick="selectPair('EURUSD')">
-          <p class="text-sm font-medium">EUR/USD</p>
-          <p class="text-green-600" id="EURUSD">-</p>
-        </button>
-        <button class="p-4 bg-gray-50 rounded-xl shadow-sm text-left" onclick="selectPair('GBPUSD')">
-          <p class="text-sm font-medium">GBP/USD</p>
-          <p class="text-red-600" id="GBPUSD">-</p>
-        </button>
-        <button class="p-4 bg-gray-50 rounded-xl shadow-sm text-left" onclick="selectPair('USDJPY')">
-          <p class="text-sm font-medium">USD/JPY</p>
-          <p class="text-green-600" id="USDJPY">-</p>
-        </button>
-        <button class="p-4 bg-gray-50 rounded-xl shadow-sm text-left" onclick="selectPair('USDCHF')">
-          <p class="text-sm font-medium">USD/CHF</p>
-          <p class="text-red-600" id="USDCHF">-</p>
-        </button>
+      <!-- Trade Panel -->
+      <div class="bg-white rounded-xl p-4 shadow">
+        <h3 class="text-md font-semibold mb-2">Place Trade</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+          <input type="number" id="amount" placeholder="Amount ($)" class="border p-2 rounded">
+          <input type="number" id="duration" placeholder="Duration (s)" class="border p-2 rounded">
+          <button onclick="placeTrade('rise')" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Rise</button>
+          <button onclick="placeTrade('fall')" class="bg-red-500 text-white p-2 rounded hover:bg-red-600">Fall</button>
+        </div>
       </div>
-    </div>
 
-    <div class="bg-white rounded-2xl shadow p-4 mb-6">
-      <h2 class="text-lg font-semibold mb-4" id="selectedPairLabel">EUR/USD Chart</h2>
-      <canvas id="forexChart" height="100"></canvas>
-      <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <input type="number" id="lotSize" placeholder="Lot Size" class="border rounded p-2 w-full">
-        <input type="number" id="tp" placeholder="Take Profit (TP)" class="border rounded p-2 w-full">
-        <input type="number" id="sl" placeholder="Stop Loss (SL)" class="border rounded p-2 w-full">
-        <button onclick="placeTrade()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Place Trade</button>
+      <!-- Active Contracts -->
+      <div class="bg-white rounded-xl p-4 shadow mt-4">
+        <h3 class="text-md font-semibold mb-2">Active Contracts</h3>
+        <div id="contracts" class="space-y-2 text-sm text-gray-700"></div>
       </div>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow p-4 mb-6">
-      <h2 class="text-lg font-semibold mb-4">Profit/Loss History</h2>
-      <canvas id="profitLossChart" height="100"></canvas>
-    </div>
+    </main>
   </div>
 
   <script>
-    const API_KEY = "fa443b33e32c49e1b03c0be6d9699b1c";
-    const pairs = ["EURUSD", "GBPUSD", "USDJPY", "USDCHF"];
-    let selectedPair = "EURUSD";
-    let tradeChart;
-    let profitChart;
-    let chartData = [];
-    let livePrice = 0;
-    let profitHistory = [];
-
-    function updateChartLabel() {
-      document.getElementById("selectedPairLabel").innerText = `${selectedPair.slice(0,3)}/${selectedPair.slice(3)} Chart`;
-    }
-
-    function selectPair(pair) {
-      selectedPair = pair;
-      updateChartLabel();
-      fetchLiveChartData(pair);
-    }
+    let selectedMarket = 'EUR/USD';
+    let chart;
+    let prices = [1.1000];
+    let trades = [];
+    let balance = 10000;
 
     function updateChart() {
-      if (tradeChart) tradeChart.destroy();
-      const ctx = document.getElementById("forexChart").getContext("2d");
-      tradeChart = new Chart(ctx, {
-        type: "line",
+      if (chart) chart.destroy();
+      const ctx = document.getElementById("marketChart").getContext("2d");
+      chart = new Chart(ctx, {
+        type: 'line',
         data: {
-          labels: chartData.map((_, i) => i),
+          labels: Array(prices.length).fill(''),
           datasets: [{
-            label: selectedPair,
-            data: chartData,
-            borderColor: "#3b82f6",
+            data: prices,
+            borderColor: '#3b82f6',
             fill: false,
             tension: 0.3
           }]
@@ -119,53 +87,85 @@
       });
     }
 
-    async function fetchLiveChartData(pair) {
-      const url = `https://api.twelvedata.com/time_series?symbol=${pair}&interval=1min&outputsize=20&apikey=${API_KEY}`;
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data && data.values) {
-          chartData = data.values.reverse().map(v => parseFloat(v.close));
-          livePrice = chartData[chartData.length - 1];
-          updateChart();
-        }
-      } catch (err) {
-        console.error("Chart fetch failed", err);
+    function selectMarket(market) {
+      selectedMarket = market;
+      document.getElementById('marketTitle').innerText = market;
+      prices = [Math.random() * (1.15 - 1.10) + 1.10];
+      updateChart();
+    }
+
+    function simulatePriceUpdate() {
+      let last = prices[prices.length - 1];
+      let newPrice = last + (Math.random() - 0.5) * 0.002;
+      prices.push(parseFloat(newPrice.toFixed(4)));
+      if (prices.length > 30) prices.shift();
+      updateChart();
+      updateContracts(newPrice);
+    }
+
+    function placeTrade(direction) {
+      const amount = parseFloat(document.getElementById('amount').value);
+      const duration = parseInt(document.getElementById('duration').value);
+      if (isNaN(amount) || isNaN(duration) || amount <= 0 || duration <= 0) {
+        alert('Enter valid amount and duration');
+        return;
       }
+      if (balance < amount) {
+        alert('Insufficient balance');
+        return;
+      }
+      balance -= amount;
+      document.getElementById('balance').innerText = balance.toFixed(2);
+
+      trades.push({
+        market: selectedMarket,
+        direction,
+        entryPrice: prices[prices.length - 1],
+        amount,
+        duration,
+        startTime: Date.now()
+      });
     }
 
-    async function fetchLivePrices() {
-      await Promise.all(pairs.map(async (pair) => {
-        const url = `https://api.twelvedata.com/price?symbol=${pair}&apikey=${API_KEY}`;
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-          const price = parseFloat(data.price);
-          document.getElementById(pair).innerText = price.toFixed(4);
-          if (pair === selectedPair) {
-            livePrice = price;
-            chartData.push(price);
-            if (chartData.length > 20) chartData.shift();
-            updateChart();
-            evaluateTrades();
-          }
-        } catch (err) {
-          console.error(`Price fetch failed for ${pair}`, err);
+    function updateContracts(currentPrice) {
+      const now = Date.now();
+      const contractDiv = document.getElementById('contracts');
+      contractDiv.innerHTML = '';
+      trades = trades.filter(trade => {
+        const elapsed = (now - trade.startTime) / 1000;
+        if (elapsed >= trade.duration) {
+          const win = (trade.direction === 'rise' && currentPrice > trade.entryPrice) ||
+                      (trade.direction === 'fall' && currentPrice < trade.entryPrice);
+          const payout = win ? trade.amount * 1.8 : 0;
+          balance += payout;
+          document.getElementById('balance').innerText = balance.toFixed(2);
+          return false;
         }
-      }));
+        contractDiv.innerHTML += `
+          <div class="border p-2 rounded flex justify-between">
+            <span>${trade.market} - ${trade.direction.toUpperCase()}</span>
+            <span>${Math.round(trade.duration - elapsed)}s left</span>
+          </div>
+        `;
+        return true;
+      });
     }
 
-    // retain: placeTrade, evaluateTrades, closeTrade, renderTrades, updateProfitChart as before...
+    setInterval(simulatePriceUpdate, 3000);
 
-    setInterval(fetchLivePrices, 10000);
+    document.getElementById('deposit').onclick = () => {
+      balance += 1000;
+      document.getElementById('balance').innerText = balance.toFixed(2);
+    };
+    document.getElementById('withdraw').onclick = () => {
+      if (balance >= 1000) {
+        balance -= 1000;
+        document.getElementById('balance').innerText = balance.toFixed(2);
+      }
+    };
+
     window.onload = () => {
-      if (!localStorage.getItem("balance")) localStorage.setItem("balance", "10000");
-      document.getElementById("balance").innerText = parseFloat(localStorage.getItem("balance")).toFixed(2);
-      fetchLiveChartData(selectedPair);
-      fetchLivePrices();
-      updateChartLabel();
-      renderTrades();
-      updateProfitChart();
+      updateChart();
     }
   </script>
 </body>

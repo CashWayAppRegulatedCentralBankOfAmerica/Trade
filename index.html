@@ -71,8 +71,10 @@
     <div class="bg-white rounded-2xl shadow p-4 mb-6">
       <h2 class="text-lg font-semibold mb-4" id="selectedPairLabel">EUR/USD Chart</h2>
       <canvas id="forexChart" height="100"></canvas>
-      <div class="mt-4 flex gap-2">
-        <input type="number" id="lotSize" placeholder="Lot Size" class="border rounded p-2 w-24">
+      <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <input type="number" id="lotSize" placeholder="Lot Size" class="border rounded p-2 w-full">
+        <input type="number" id="tp" placeholder="Take Profit (TP)" class="border rounded p-2 w-full">
+        <input type="number" id="sl" placeholder="Stop Loss (SL)" class="border rounded p-2 w-full">
         <button onclick="placeTrade()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Place Trade</button>
       </div>
     </div>
@@ -82,8 +84,7 @@
     let selectedPair = 'EURUSD';
     let tradeChart;
     let chartData = [1.0800];
-
-    const balanceEl = document.getElementById("balance");
+    let livePrice = 1.0800;
 
     function updateChartLabel() {
       document.getElementById("selectedPairLabel").innerText = `${selectedPair.slice(0,3)}/${selectedPair.slice(3)} Chart`;
@@ -116,21 +117,64 @@
     }
 
     function simulateChartUpdate() {
-      chartData.push(chartData[chartData.length - 1] + (Math.random() - 0.5) * 0.002);
+      livePrice = chartData[chartData.length - 1] + (Math.random() - 0.5) * 0.002;
+      chartData.push(livePrice);
       if (chartData.length > 20) chartData.shift();
       updateChart();
+      evaluateTrades();
     }
 
     setInterval(simulateChartUpdate, 2000);
 
     function placeTrade() {
       const lot = parseFloat(document.getElementById("lotSize").value);
+      const tp = parseFloat(document.getElementById("tp").value);
+      const sl = parseFloat(document.getElementById("sl").value);
       if (isNaN(lot) || lot <= 0) return alert("Enter valid lot size");
 
+      let balance = parseFloat(localStorage.getItem("balance") || "10000");
+      const margin = lot * 100;
+      if (balance < margin) return alert("Insufficient balance to place trade.");
+
+      balance -= margin;
+      localStorage.setItem("balance", balance.toFixed(2));
+      document.getElementById("balance").innerText = balance.toFixed(2);
+
       const trades = JSON.parse(localStorage.getItem("trades") || "[]");
-      trades.push({ pair: selectedPair, lot, entry: chartData[chartData.length - 1], time: new Date().toLocaleTimeString() });
+      trades.push({ pair: selectedPair, lot, entry: livePrice, tp, sl, margin, time: new Date().toLocaleTimeString() });
       localStorage.setItem("trades", JSON.stringify(trades));
       renderTrades();
+    }
+
+    function evaluateTrades() {
+      let trades = JSON.parse(localStorage.getItem("trades") || "[]");
+      let balance = parseFloat(localStorage.getItem("balance") || "10000");
+      let updated = false;
+
+      trades = trades.filter(t => {
+        const { entry, tp, sl, lot, margin } = t;
+        if ((tp && livePrice >= tp) || (sl && livePrice <= sl)) {
+          const profit = ((livePrice - entry) * 100000) * lot;
+          balance += margin + profit;
+          updated = true;
+          return false; // remove closed trade
+        }
+        return true; // keep running
+      });
+
+      if (updated) {
+        localStorage.setItem("trades", JSON.stringify(trades));
+        localStorage.setItem("balance", balance.toFixed(2));
+        document.getElementById("balance").innerText = balance.toFixed(2);
+        renderTrades();
+      }
+
+      // Check for blown account
+      if (balance <= 0) {
+        alert("Account blown!");
+        localStorage.clear();
+        location.reload();
+      }
     }
 
     function renderTrades() {
@@ -142,7 +186,7 @@
       }
       container.innerHTML = trades.map(t => `
         <div class="text-sm flex justify-between py-1">
-          <span>${t.pair} • Lot: ${t.lot}</span>
+          <span>${t.pair} • Lot: ${t.lot} • TP: ${t.tp || '-'} SL: ${t.sl || '-'}</span>
           <span class="text-green-600">Entry: ${t.entry.toFixed(4)} @ ${t.time}</span>
         </div>
       `).join('');
@@ -158,11 +202,19 @@
         const pair = pairs[i];
         const rate = rateData.rates[Object.keys(rateData.rates)[0]];
         document.getElementById(pair).innerText = rate.toFixed(4);
+        if (pair === selectedPair) {
+          livePrice = rate;
+          chartData.push(rate);
+          if (chartData.length > 20) chartData.shift();
+          updateChart();
+        }
       });
     }
 
     setInterval(fetchRates, 5000);
     window.onload = () => {
+      if (!localStorage.getItem("balance")) localStorage.setItem("balance", "10000");
+      document.getElementById("balance").innerText = parseFloat(localStorage.getItem("balance")).toFixed(2);
       fetchRates();
       updateChartLabel();
       updateChart();

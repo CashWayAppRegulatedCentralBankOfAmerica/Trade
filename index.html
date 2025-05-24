@@ -1,96 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MT5 Web Dashboard - XM Global Replica</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XM Global MT5 Dashboard Clone</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: Helvetica, sans-serif;
-    }
-  </style>
 </head>
-<body class="bg-gray-100 text-gray-900">
-  <div class="max-w-screen-lg mx-auto p-4">
-    <header class="flex justify-between items-center py-4">
-      <h1 class="text-2xl font-semibold">MT5 Dashboard</h1>
-      <span class="text-sm text-gray-500">Demo Mode</span>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+  <div class="max-w-6xl mx-auto p-6 flex-grow flex flex-col gap-6">
+    <!-- Dashboard header -->
+    <header class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">XM Global MT5 Dashboard</h1>
+      <div>
+        <span class="font-semibold">Balance: $</span>
+        <span id="balance" class="text-green-600 font-semibold">10000</span>
+      </div>
     </header>
 
-    <!-- Account Overview -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-      <div class="bg-white rounded-2xl shadow p-4">
-        <p class="text-gray-500 text-sm">Balance</p>
-        <p class="text-2xl font-bold">$<span id="balance">10000.00</span></p>
-      </div>
-      <div class="bg-white rounded-2xl shadow p-4 flex flex-col gap-2">
-        <p class="text-gray-500 text-sm">Deposits</p>
-        <button class="bg-green-500 text-white py-1 px-3 rounded-lg text-sm hover:bg-green-600">Deposit</button>
-      </div>
-      <div class="bg-white rounded-2xl shadow p-4 flex flex-col gap-2">
-        <p class="text-gray-500 text-sm">Withdrawals</p>
-        <button class="bg-red-500 text-white py-1 px-3 rounded-lg text-sm hover:bg-red-600">Withdraw</button>
-      </div>
+    <!-- Deposit / Withdraw Bars -->
+    <div class="flex gap-4">
+      <button class="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Deposit</button>
+      <button class="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700 transition">Withdraw</button>
     </div>
 
     <!-- Running Trades -->
-    <div class="bg-white rounded-2xl shadow p-4 mb-6">
-      <h2 class="text-lg font-semibold mb-2">Running Trades</h2>
-      <div id="running-trades" class="space-y-2">
-        <p class="text-sm text-gray-400 italic">No active trades found</p>
+    <section>
+      <h2 class="text-xl font-semibold mb-2">Running Trades</h2>
+      <div id="running-trades" class="flex flex-col gap-2 min-h-[100px] border rounded p-3 bg-white shadow-sm">
+        <p class="text-sm text-gray-400 italic">Loading trades...</p>
       </div>
-    </div>
+    </section>
 
-    <!-- Market Pairs -->
-    <div class="bg-white rounded-2xl shadow p-4 mb-6">
-      <h2 class="text-lg font-semibold mb-4">Major Markets</h2>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="market-buttons">
-        <button class="p-4 bg-gray-50 rounded-xl shadow-sm text-left" onclick="selectPair('EURUSD')">
-          <p class="text-sm font-medium">EUR/USD</p>
-          <p class="text-green-600" id="EURUSD">-</p>
-        </button>
-        <button class="p-4 bg-gray-50 rounded-xl shadow-sm text-left" onclick="selectPair('GBPUSD')">
-          <p class="text-sm font-medium">GBP/USD</p>
-          <p class="text-red-600" id="GBPUSD">-</p>
-        </button>
-        <button class="p-4 bg-gray-50 rounded-xl shadow-sm text-left" onclick="selectPair('USDJPY')">
-          <p class="text-sm font-medium">USD/JPY</p>
-          <p class="text-green-600" id="USDJPY">-</p>
-        </button>
-        <button class="p-4 bg-gray-50 rounded-xl shadow-sm text-left" onclick="selectPair('USDCHF')">
-          <p class="text-sm font-medium">USD/CHF</p>
-          <p class="text-red-600" id="USDCHF">-</p>
-        </button>
+    <!-- Trading Controls -->
+    <section class="bg-white p-4 rounded shadow-sm">
+      <h2 class="text-xl font-semibold mb-3">Place New Trade</h2>
+      <div class="flex flex-wrap gap-3 items-center mb-4">
+        <label class="flex flex-col text-sm">
+          Pair:
+          <select id="pairSelector" class="border rounded px-2 py-1" onchange="selectPair(this.value)">
+            <option value="EURUSD" selected>EUR/USD</option>
+            <option value="GBPUSD">GBP/USD</option>
+            <option value="USDJPY">USD/JPY</option>
+            <option value="USDCHF">USD/CHF</option>
+          </select>
+        </label>
+        <label class="flex flex-col text-sm">
+          Lot Size:
+          <input type="number" id="lotSize" class="border rounded px-2 py-1 w-24" value="1" min="0.01" step="0.01" />
+        </label>
+        <label class="flex flex-col text-sm">
+          Take Profit (TP):
+          <input type="number" id="tp" class="border rounded px-2 py-1 w-24" step="0.0001" placeholder="Optional" />
+        </label>
+        <label class="flex flex-col text-sm">
+          Stop Loss (SL):
+          <input type="number" id="sl" class="border rounded px-2 py-1 w-24" step="0.0001" placeholder="Optional" />
+        </label>
+        <button onclick="placeTrade()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition self-end">Place Trade</button>
       </div>
-    </div>
+    </section>
 
-    <!-- Chart & Trade Placement -->
-    <div class="bg-white rounded-2xl shadow p-4 mb-6">
-      <h2 class="text-lg font-semibold mb-4" id="selectedPairLabel">EUR/USD Chart</h2>
-      <canvas id="forexChart" height="100"></canvas>
-      <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <input type="number" id="lotSize" placeholder="Lot Size" class="border rounded p-2 w-full">
-        <input type="number" id="tp" placeholder="Take Profit (TP)" class="border rounded p-2 w-full">
-        <input type="number" id="sl" placeholder="Stop Loss (SL)" class="border rounded p-2 w-full">
-        <button onclick="placeTrade()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Place Trade</button>
-      </div>
-    </div>
+    <!-- Forex Chart -->
+    <section class="bg-white p-4 rounded shadow-sm flex flex-col">
+      <h2 id="selectedPairLabel" class="text-xl font-semibold mb-2">EUR/USD Chart</h2>
+      <canvas id="forexChart" class="w-full h-64"></canvas>
+    </section>
 
     <!-- Profit/Loss Chart -->
-    <div class="bg-white rounded-2xl shadow p-4 mb-6">
-      <h2 class="text-lg font-semibold mb-4">Profit/Loss History</h2>
-      <canvas id="profitLossChart" height="100"></canvas>
-    </div>
+    <section class="bg-white p-4 rounded shadow-sm">
+      <h2 class="text-xl font-semibold mb-2">Profit/Loss History</h2>
+      <canvas id="profitLossChart" class="w-full h-32"></canvas>
+    </section>
+
+    <!-- Major Forex Markets -->
+    <section class="bg-white p-4 rounded shadow-sm">
+      <h2 class="text-xl font-semibold mb-2">Major Forex Markets</h2>
+      <div class="grid grid-cols-4 gap-4 text-center text-sm font-semibold">
+        <button id="EURUSD" onclick="selectPair('EURUSD')" class="bg-gray-100 hover:bg-blue-100 rounded py-2 transition">EUR/USD<br>-</button>
+        <button id="GBPUSD" onclick="selectPair('GBPUSD')" class="bg-gray-100 hover:bg-blue-100 rounded py-2 transition">GBP/USD<br>-</button>
+        <button id="USDJPY" onclick="selectPair('USDJPY')" class="bg-gray-100 hover:bg-blue-100 rounded py-2 transition">USD/JPY<br>-</button>
+        <button id="USDCHF" onclick="selectPair('USDCHF')" class="bg-gray-100 hover:bg-blue-100 rounded py-2 transition">USD/CHF<br>-</button>
+      </div>
+    </section>
   </div>
 
   <script>
     let selectedPair = 'EURUSD';
     let tradeChart;
     let profitChart;
-    let chartData = [1.0800];
-    let livePrice = 1.0800;
+    let chartData = [];
+    let times = [];
+    let livePrice = 0;
     let profitHistory = [];
 
     function updateChartLabel() {
@@ -99,9 +100,10 @@
 
     function selectPair(pair) {
       selectedPair = pair;
+      chartData = [];
+      times = [];
       updateChartLabel();
-      chartData = [Math.random() * (1.1 - 1.05) + 1.05];
-      updateChart();
+      fetchLiveData();
     }
 
     function updateChart() {
@@ -110,7 +112,7 @@
       tradeChart = new Chart(ctx, {
         type: "line",
         data: {
-          labels: Array(chartData.length).fill(''),
+          labels: times,
           datasets: [{
             label: selectedPair,
             data: chartData,
@@ -123,29 +125,46 @@
       });
     }
 
-    function updateProfitChart() {
-      if (profitChart) profitChart.destroy();
-      const ctx = document.getElementById("profitLossChart").getContext("2d");
-      profitChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: profitHistory.map((_, i) => `Trade ${i + 1}`),
-          datasets: [{
-            label: 'Profit/Loss',
-            data: profitHistory,
-            backgroundColor: profitHistory.map(p => p >= 0 ? '#22c55e' : '#ef4444')
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } } }
-      });
+    // Fetch live forex rates from FreeForexAPI, append to chart
+    async function fetchLiveData() {
+      try {
+        const response = await fetch(`https://www.freeforexapi.com/api/live?pairs=${selectedPair}`);
+        const data = await response.json();
+        if (data.rates && data.rates[selectedPair]) {
+          livePrice = data.rates[selectedPair].rate;
+          const now = new Date().toLocaleTimeString();
+
+          if (chartData.length >= 30) {
+            chartData.shift();
+            times.shift();
+          }
+
+          chartData.push(livePrice);
+          times.push(now);
+          updateChart();
+          evaluateTrades();
+          updateMarketButton(selectedPair, livePrice);
+        }
+      } catch (err) {
+        console.error('Error fetching live data:', err);
+      }
     }
 
-    function simulateChartUpdate() {
-      livePrice += (Math.random() - 0.5) * 0.002;
-      chartData.push(livePrice);
-      if (chartData.length > 20) chartData.shift();
-      updateChart();
-      evaluateTrades();
+    // Update market buttons price display live
+    function updateMarketButton(pair, price) {
+      const el = document.getElementById(pair);
+      if (!el) return;
+      const prevText = el.innerText;
+      el.innerText = price.toFixed(4);
+      if (prevText !== '-') {
+        if (price > parseFloat(prevText)) {
+          el.classList.remove('text-red-600');
+          el.classList.add('text-green-600');
+        } else if (price < parseFloat(prevText)) {
+          el.classList.remove('text-green-600');
+          el.classList.add('text-red-600');
+        }
+      }
     }
 
     function placeTrade() {
@@ -238,36 +257,53 @@
       `).join('');
     }
 
-    async function fetchRates() {
-      const pairs = ["EURUSD", "GBPUSD", "USDJPY", "USDCHF"];
-      const responses = await Promise.all(pairs.map(pair =>
-        fetch(`https://api.exchangerate.host/latest?base=${pair.slice(0, 3)}&symbols=${pair.slice(3)}`)
-      ));
-      const data = await Promise.all(responses.map(res => res.json()));
-      data.forEach((rateData, i) => {
-        const pair = pairs[i];
-        const rate = rateData.rates[Object.keys(rateData.rates)[0]];
-        document.getElementById(pair).innerText = rate.toFixed(4);
-        if (pair === selectedPair) {
-          livePrice = rate;
-          chartData.push(rate);
-          if (chartData.length > 20) chartData.shift();
-          updateChart();
-        }
+    function updateProfitChart() {
+      if (profitChart) profitChart.destroy();
+      const ctx = document.getElementById("profitLossChart").getContext("2d");
+      profitChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: profitHistory.map((_, i) => `Trade ${i + 1}`),
+          datasets: [{
+            label: 'Profit/Loss',
+            data: profitHistory,
+            backgroundColor: profitHistory.map(p => p >= 0 ? '#22c55e' : '#ef4444')
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
       });
     }
 
-    setInterval(simulateChartUpdate, 3000);
-    setInterval(fetchRates, 10000);
+    // Fetch prices for market buttons to keep updated
+    async function fetchMarketPrices() {
+      const pairs = ["EURUSD", "GBPUSD", "USDJPY", "USDCHF"];
+      for (const pair of pairs) {
+        try {
+          const response = await fetch(`https://www.freeforexapi.com/api/live?pairs=${pair}`);
+          const data = await response.json();
+          if (data.rates && data.rates[pair]) {
+            updateMarketButton(pair, data.rates[pair].rate);
+          }
+        } catch(e) {
+          console.error('Market price fetch error', e);
+        }
+      }
+    }
 
+    // Init
     window.onload = () => {
       if (!localStorage.getItem("balance")) localStorage.setItem("balance", "10000");
       document.getElementById("balance").innerText = parseFloat(localStorage.getItem("balance")).toFixed(2);
-      fetchRates();
       updateChartLabel();
-      updateChart();
+      selectPair(selectedPair);
       renderTrades();
       updateProfitChart();
+      fetchMarketPrices();
+
+      // Update live price chart every 3 sec
+      setInterval(fetchLiveData, 3000);
+      // Update market prices on buttons every 10 sec
+      setInterval(fetchMarketPrices, 10000);
     };
   </script>
 </body>
